@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Da Hora</title>
+  <style>
+    /* Estilos CSS para a página */
+    body {
+      background-color: #f1f1f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      max-width: 800px; /* Aumente o valor para ajustar o tamanho do contêiner */
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box; /* Adicionado para incluir o preenchimento na largura total */
+    }
+
+    .titulo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    /* Estilos CSS para a tabela */
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid black; /* Adicionado para criar a borda preta */
+    }
+
+    /* Estilos CSS para os botões */
+    .button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px; /* Adicionado espaçamento acima dos botões */
+    }
+
+    .button-delete {
+      background-color: #f44336;
+    }
+
+    .button:hover {
+      opacity: 0.8;
+    }
+
+    /* Estilos CSS para a seção de diferença de horas */
+    .diferenca-horas {
+      text-align: left; /* Alinha o texto à esquerda */
+      margin-top: 10px; /* Adicionado espaçamento acima da seção */
+      font-weight: bold;
+    }
+
+    /* Estilos CSS para o pop-up */
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+    }
+
+    .popup-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .popup-title {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .popup-close {
+      align-self: flex-end;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="titulo">
+      <h1>Da Hora</h1>
+      <div>
+        <label for="meta_horas">Meta de horas:</label>
+        <input type="number" id="meta_horas" name="meta_horas" min="0" onchange="calcularDiferenca()">
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Descrição do curso</th>
+          <th>Quantidade de horas</th>
+          <th>Armazene seus certificados</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabela-cursos">
+        <tr>
+          <td><input type="text" name="descricao_curso1"></td>
+          <td><input type="number" name="quantidade_horas1" min="0" oninput="calcularTotal()"></td>
+          <td>
+            <input type="file" name="certificado1" accept="application/pdf">
+          </td>
+          <td>
+            <button class="button button-delete" onclick="excluirLinha(this)">Excluir</button>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Total de horas:</th>
+          <td id="total_horas">0</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="diferenca-horas">
+      Diferença de horas: <span id="diferenca"></span>
+    </div>
+
+    <div>
+      <button class="button" onclick="inserirCertificado()">Inserir</button>
+      <button class="button" onclick="excluirUltimaLinha()">Excluir Última</button>
+    </div>
+  </div>
+
+  <div class="popup" id="popup" style="display: none;">
+    <div class="popup-content">
+      <span class="popup-close" onclick="fecharPopup()">&times;</span>
+      <h2 class="popup-title">Parabéns!</h2>
+      <p>Você alcançou o seu objetivo de horas.</p>
+    </div>
+  </div>
+
+  <script>
+    let numCertificados = 1;
+
+    function calcularTotal() {
+      const inputsHoras = document.querySelectorAll('input[name^="quantidade_horas"]');
+      let total = 0;
+
+      inputsHoras.forEach(input => {
+        if (!isNaN(input.value) && input.value !== '') {
+          total += parseInt(input.value);
+        }
+      });
+
+      document.getElementById('total_horas').textContent = total;
+      calcularDiferenca();
+    }
+
+    function calcularDiferenca() {
+      const metaHoras = parseInt(document.getElementById('meta_horas').value);
+      const totalHoras = parseInt(document.getElementById('total_horas').textContent);
+      const diferenca = metaHoras - totalHoras;
+
+      document.getElementById('diferenca').textContent = diferenca;
+
+      if (diferenca <= 0) {
+        exibirPopup();
+      }
+    }
+
+    function inserirCertificado() {
+      numCertificados++;
+
+      const tabelaCursos = document.getElementById('tabela-cursos');
+      const newRow = document.createElement('tr');
+
+      const descricaoCursoCell = document.createElement('td');
+      const descricaoCursoInput = document.createElement('input');
+      descricaoCursoInput.setAttribute('type', 'text');
+      descricaoCursoInput.setAttribute('name', `descricao_curso${numCertificados}`);
+      descricaoCursoCell.appendChild(descricaoCursoInput);
+      newRow.appendChild(descricaoCursoCell);
+
+      const quantidadeHorasCell = document.createElement('td');
+      const quantidadeHorasInput = document.createElement('input');
+      quantidadeHorasInput.setAttribute('type', 'number');
+      quantidadeHorasInput.setAttribute('name', `quantidade_horas${numCertificados}`);
+      quantidadeHorasInput.setAttribute('min', '0');
+      quantidadeHorasInput.setAttribute('oninput', 'calcularTotal()');
+      quantidadeHorasCell.appendChild(quantidadeHorasInput);
+      newRow.appendChild(quantidadeHorasCell);
+
+      const certificadoCell = document.createElement('td');
+      const certificadoInput = document.createElement('input');
+      certificadoInput.setAttribute('type', 'file');
+      certificadoInput.setAttribute('name', `certificado${numCertificados}`);
+      certificadoInput.setAttribute('accept', 'application/pdf');
+      certificadoCell.appendChild(certificadoInput);
+      newRow.appendChild(certificadoCell);
+
+      const deleteButtonCell = document.createElement('td');
+      const deleteButton = document.createElement('button');
+      deleteButton.setAttribute('class', 'button button-delete');
+      deleteButton.setAttribute('onclick', 'excluirLinha(this)');
+      deleteButton.textContent = 'Excluir';
+      deleteButtonCell.appendChild(deleteButton);
+      newRow.appendChild(deleteButtonCell);
+
+      tabelaCursos.appendChild(newRow);
+    }
+
+    function excluirLinha(button) {
+      const row = button.parentNode.parentNode;
+      row.parentNode.removeChild(row);
+      calcularTotal();
+    }
+
+    function excluirUltimaLinha() {
+      const tabelaCursos = document.getElementById('tabela-cursos');
+      const rows = tabelaCursos.getElementsByTagName('tr');
+      if (rows.length > 1) {
+        tabelaCursos.removeChild(rows[rows.length - 1]);
+        calcularTotal();
+      }
+    }
+
+    function exibirPopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'block';
+    }
+
+    function fecharPopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
